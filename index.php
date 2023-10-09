@@ -1,3 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 
-echo phpinfo();
+require_once 'Autoloader.php';
+
+spl_autoload_register(['Autoloader', 'autoload']);
+
+
+

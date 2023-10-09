@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-class Autoloader
+final class Autoloader
 {
     /**
      * @throws Exception

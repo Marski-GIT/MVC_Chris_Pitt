@@ -9,9 +9,10 @@ use ReflectionException;
 use ReflectionMethod;
 use ReflectionProperty;
 
-class Inspector
+final class Inspector
 {
-    protected string $_class;
+    const PATTERN = '(@[a-zA-Z+\s*[a-zA-Z0-9, ()_]*)';
+    protected object $_class;
     protected array $_meta = [
         'class'      => [],
         'properties' => [],
@@ -21,16 +22,13 @@ class Inspector
     protected array $_methods = [];
 
     /**
-     * @param string $_class
+     * @param object $_class
      */
-    public function __construct(string $_class)
+    public function __construct(object $_class)
     {
         $this->_class = $_class;
     }
 
-    /**
-     * @throws ReflectionException
-     */
     public function getClassMeta()
     {
         if (empty($this->_meta['class'])) {
@@ -114,27 +112,18 @@ class Inspector
         return $this->_meta['methods'][$method];
     }
 
-    /**
-     * @throws ReflectionException
-     */
     protected function _getClassComment(): false|string
     {
         $reflection = new ReflectionClass($this->_class);
         return $reflection->getDocComment();
     }
 
-    /**
-     * @throws ReflectionException
-     */
     protected function _getClassProperties(): array
     {
         $reflection = new ReflectionClass($this->_class);
         return $reflection->getProperties();
     }
 
-    /**
-     * @throws ReflectionException
-     */
     protected function _getClassMethods(): array
     {
         $reflection = new ReflectionClass($this->_class);
@@ -162,8 +151,7 @@ class Inspector
     protected function _parse(string $comment): array
     {
         $meta = [];
-        $pattern = '(@[a-zA-Z+\s*[a-zA-Z0-9, ()_]*)';
-        $matches = StringMethods::match($comment, $pattern);
+        $matches = StringMethods::match($comment, self::PATTERN);
         if (!is_null($matches)) {
 
             foreach ($matches as $match) {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Framework;
 
-class StringMethods
+final class StringMethods
 {
     private static string $_delimiter = '#';
 

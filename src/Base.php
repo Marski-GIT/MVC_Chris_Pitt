@@ -38,7 +38,7 @@ abstract class Base
             throw new Exception('Wywołaj metodę parent::__construct!');
         }
 
-        $getMatches = StringMethods::match($name, '^get(' . self::REGEX_METHOD_NAME . '+)$');
+        $getMatches = StringMethods::match($name, '(get\()(' . self::REGEX_METHOD_NAME . '+)(\))$');
 
         if (sizeof($getMatches) > 0) {
 
@@ -57,7 +57,7 @@ abstract class Base
             }
         }
 
-        $setMatches = StringMethods::match($name, '^set(' . self::REGEX_METHOD_NAME . '+)$');
+        $setMatches = StringMethods::match($name, '^(set\()(' . self::REGEX_METHOD_NAME . '+)(\))$');
 
         if (sizeof($setMatches) > 0) {
 

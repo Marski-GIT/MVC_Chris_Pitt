@@ -3,8 +3,26 @@
 declare(strict_types=1);
 
 namespace Framework;
+
+use stdClass;
+
 final class ArrayMethods
 {
+    public static function toObject(array $array): stdClass
+    {
+        $result = new stdClass();
+
+        foreach ($array as $key => $value) {
+
+            if (is_array($value)) {
+                $result->{$key} = self::toObject($value);
+            } else {
+                $result->{$key} = $value;
+            }
+        }
+
+        return $result;
+    }
 
     public static function clean(array $array): array
     {

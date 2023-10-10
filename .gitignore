@@ -1,10 +1,11 @@
 composer.phar
+phpunit.xml.bak
 *.cache
 *.config
+*.env
+*.ini
 /.phpunit.cache
 /vendor/
 /garbage/
 /.idea
 /.vscode
-.env
-phpunit.xml.bak

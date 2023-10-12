@@ -18,12 +18,53 @@ final class StringMethods
         self::$_delimiter = $delimiter;
     }
 
+    public static function sanitize(string $string, $mask)
+    {
+        if (is_array($mask)) {
+            $parts = $mask;
+        } else if (is_string($mask)) {
+            $parts = str_split($mask);
+        } else {
+            return $string;
+        }
+
+        foreach ($parts as $part) {
+            $normalized = self::_normalize('\\' . $part);
+            $string = preg_replace($normalized . 'm', '\\' . $part, $string);
+        }
+
+        return $string;
+    }
+
+    public static function unique(string $string)
+    {
+        $unique = '';
+        $parts = str_split($string);
+
+        foreach ($parts as $part) {
+            if (!strstr($unique, $part)) {
+                $unique .= $part;
+            }
+
+            return $unique;
+        }
+    }
+
+    public static function indexOf(string $string, string $substring, $offset = 0): int
+    {
+        $position = strpos($string, $substring, $offset);
+        if (!is_int($position)) {
+            return -1;
+        }
+        return $position;
+    }
+
     public static function match(string $string, string $pattern): array
     {
         preg_match_all(self::_normalize($pattern), $string, $matches, PREG_PATTERN_ORDER);
 
-        if (!empty($matches[2])) {
-            return $matches[2];
+        if (!empty($matches[1])) {
+            return $matches[1];
         }
 
         if (!empty($matches[0])) {
@@ -51,5 +92,4 @@ final class StringMethods
     private function __clone(): void
     {
     }
-
 }

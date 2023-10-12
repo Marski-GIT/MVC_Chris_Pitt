@@ -11,7 +11,7 @@ use ReflectionProperty;
 
 final class Inspector
 {
-    const PATTERN = '(@[a-zA-Z+\s*[a-zA-Z0-9, ()_]*)';
+    const PATTERN = '(@[a-zA-Z]+\s*[a-zA-Z0-9, ()_]*)';
     protected object $_class;
     protected array $_meta = [
         'class'      => [],

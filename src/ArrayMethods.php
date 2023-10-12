@@ -46,6 +46,11 @@ final class ArrayMethods
         return $return;
     }
 
+    public static function last(array $children)
+    {
+        return end($children);
+    }
+
     private function __construct()
     {
     }

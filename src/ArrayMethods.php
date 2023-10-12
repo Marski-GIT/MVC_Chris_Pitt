@@ -34,6 +34,18 @@ final class ArrayMethods
         return array_map(fn($item) => trim($item), $array);
     }
 
+    public static function flatten(array $array, $return = [])
+    {
+        foreach ($array as $value) {
+            if (is_array($value) || is_object($value)) {
+                $return = self::flatten($value, $return);
+            } else {
+                $return[] = $value;
+            }
+        }
+        return $return;
+    }
+
     private function __construct()
     {
     }

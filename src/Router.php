@@ -34,7 +34,6 @@ class Router extends Base
     protected array $_routes = [];
 
     /**
-     * /**
      * @param string $name
      * @return ImplementationException
      */
@@ -156,7 +155,7 @@ class Router extends Base
                 }
             }
         };
-        
+
         $hooks($methodMeta, '@before');
         call_user_func([$instance, $action], is_array($parameters ? $parameters : []));
         $hooks($methodMeta, '@after');

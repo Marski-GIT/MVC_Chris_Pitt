@@ -76,6 +76,10 @@ class Template extends Base
      */
     protected $_function;
 
+    /**
+     * @param string $name
+     * @return ImplementationException
+     */
     public function _getExceptionForImplementation(string $name): ImplementationException
     {
         return new ImplementationException('Metoda' . $name . ' nie jest zaimplementowana');

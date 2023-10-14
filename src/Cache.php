@@ -21,7 +21,6 @@ class Cache extends Base
     protected array $_options = [];
 
     /**
-     * /**
      * @param string $name
      * @return ImplementationException
      */

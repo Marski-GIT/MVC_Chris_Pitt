@@ -46,15 +46,30 @@ final class ArrayMethods
         return $return;
     }
 
-    public static function last(array $children)
+    public static function last($array)
     {
-        return end($children);
+        if (sizeof($array) == 0) {
+            return null;
+        }
+
+        $keys = array_keys($array);
+        return $array[$keys[sizeof($keys) - 1]];
+    }
+
+    public static function first($array)
+    {
+        if (sizeof($array) == 0) {
+            return null;
+        }
+
+        $keys = array_keys($array);
+        return $array[$keys[0]];
     }
 
     private function __construct()
     {
     }
-
+    
     private function __clone(): void
     {
     }

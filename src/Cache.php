@@ -38,8 +38,8 @@ class Cache extends Base
             throw new ArgumentException('Nieprawidłowy typ.');
         }
         return match ($this->_type) {
-            'memcached' => new Memcache($this->_options),
-            default     => throw new ArgumentException('Nieprawidłowy typ.'),
+            'memcache' => new Memcache($this->_options),
+            default    => throw new ArgumentException('Nieprawidłowy typ.'),
         };
     }
 

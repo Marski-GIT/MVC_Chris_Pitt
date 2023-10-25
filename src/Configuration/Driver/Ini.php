@@ -18,7 +18,7 @@ final class Ini extends Driver
         if (empty($path)) {
             throw new ArgumentException('Argument path jest niepoprawny');
         }
-        if (!isset($this_parsed[$path])) {
+        if (!isset($this->_parsed[$path])) {
             $config = [];
 
             $path = $path . '.ini';
@@ -28,7 +28,7 @@ final class Ini extends Driver
                 include $path;
                 $string = ob_get_contents();
                 ob_end_clean();
-                
+
                 $pairs = parse_ini_string($string);
 
                 if (!$pairs) {

@@ -20,7 +20,6 @@ class Model extends Base
      * @readwrite
      */
     protected object $_connector;
-
     /**
      * @read
      */
@@ -37,6 +36,11 @@ class Model extends Base
     protected string $_primary;
     private array $primaryColumn;
 
+    public function _getExceptionForImplementation(string $name): ImplementationException
+    {
+        return new ImplementationException('Metoda ' . $name . ' nie jest zaimplementowana');
+    }
+
     /**
      * @throws PrimaryException
      */
@@ -52,6 +56,7 @@ class Model extends Base
     public function load(): void
     {
         $primary = $this->primaryColumn;
+
         $raw = $primary['raw'];
         $name = $primary['name'];
 
@@ -78,6 +83,7 @@ class Model extends Base
     public function delete()
     {
         $primary = $this->primaryColumn;
+
         $raw = $primary['raw'];
         $name = $primary['name'];
 
@@ -90,9 +96,10 @@ class Model extends Base
         }
     }
 
-    public function deleteAll(array $where = [])
+    public static function deleteAll(array $where = [])
     {
         $instance = new static();
+
         $query = $instance->_connector
             ->query()
             ->from($instance->_table);
@@ -107,6 +114,7 @@ class Model extends Base
     public function save()
     {
         $primary = $this->primaryColumn;
+
         $raw = $primary['raw'];
         $name = $primary['name'];
 
@@ -115,14 +123,12 @@ class Model extends Base
             ->from($this->_table);
 
         if (!empty($this->$raw)) {
-            $query->whwrw("{$name} = ?", $this->$raw);
+            $query->where("{$name} = ?", $this->$raw);
         }
 
         $data = [];
-
         foreach ($this->_columns as $key => $column) {
-
-            if (!$column['head']) {
+            if (!$column['read']) {
                 $prop = $column['raw'];
                 $data[$key] = $this->$prop;
                 continue;
@@ -153,12 +159,27 @@ class Model extends Base
         return $this->_table;
     }
 
+    public function getConnector()
+    {
+        if (empty($this->_connector)) {
+            $database = Registry::get('database');
+
+            if (!$database) {
+                throw new ConnectionException('Brak dostępnego konektora');
+            }
+
+            $this->_connector = $database->initialize();
+        }
+
+        return $this->_connector;
+    }
+
     /**
      * @throws ReflectionException
-     * @throws TypeException
      * @throws PrimaryException
+     * @throws TypeException
      */
-    public function getColumns(): array
+    public function getColumns()
     {
         if (empty($_columns)) {
             $primaries = 0;
@@ -170,7 +191,7 @@ class Model extends Base
             $properties = $inspector->getClassProperties();
 
             $first = function ($array, string $key) {
-                if (!empty($array[$key]) && sizeof($array[$key]) === 1) {
+                if (!empty($array[$key]) && sizeof($array[$key]) == 1) {
                     return $array[$key][0];
                 }
                 return null;
@@ -180,18 +201,17 @@ class Model extends Base
                 $propertyMeta = $inspector->getPropertyMeta($property);
 
                 if (!empty($propertyMeta['@column'])) {
-
-                    $name = preg_replace('#^#', '', $property);
+                    $name = preg_replace('#^_#', '', $property);
                     $primary = !empty($propertyMeta['@primary']);
                     $type = $first($propertyMeta, '@type');
                     $length = $first($propertyMeta, '@length');
                     $index = !empty($propertyMeta['@index']);
                     $readwrite = !empty($propertyMeta['@readwrite']);
-                    $read = !empty($propertyMeta['@read']);
-                    $write = !empty($propertyMeta['@write']);
+                    $read = !empty($propertyMeta['@read']) || $readwrite;
+                    $write = !empty($propertyMeta['@write']) || $readwrite;
 
                     $validate = !empty($propertyMeta['@validate']) ? $propertyMeta['@validate'] : false;
-                    $label = $first($propertyMeta, '$@label');
+                    $label = $first($propertyMeta, '@label');
 
                     if (!in_array($type, $types)) {
                         throw new TypeException('Typ ' . $type . ' jest nieprawidłowy.');
@@ -202,25 +222,24 @@ class Model extends Base
                     }
 
                     $columns[$name] = [
-                        'raw'       => $property,
-                        'name'      => $name,
-                        'primary'   => $primary,
-                        'type'      => $type,
-                        'length'    => $length,
-                        'index'     => $index,
-                        'readwrite' => $readwrite,
-                        'read'      => $read,
-                        'write'     => $write,
-                        'validate'  => $validate,
-                        'label'     => $label
+                        'raw'      => $property,
+                        'name'     => $name,
+                        'primary'  => $primary,
+                        'type'     => $type,
+                        'length'   => $length,
+                        'index'    => $index,
+                        'read'     => $read,
+                        'write'    => $write,
+                        'validate' => $validate,
+                        'label'    => $label
                     ];
                 }
-
             }
 
-            if (!$primaries != 1) {
-                throw new PrimaryException('klasa ' . $class . ' musi mieć dokładnie jedną kolumnę.');
+            if ($primaries !== 1) {
+                throw new PrimaryException('Klasa ' . $class . ' musi mieć dokładnie jedną kolumnę @primary');
             }
+
             $this->_columns = $columns;
         }
 
@@ -239,34 +258,21 @@ class Model extends Base
     {
         if (!isset($this->_primary)) {
             $primary = null;
-            foreach ($this->_columns as $column) {
 
+            foreach ($this->_columns as $column) {
                 if ($column['primary']) {
                     $primary = $column;
                     break;
                 }
             }
+
             $this->_primary = $primary;
         }
+
         return $this->_primary;
     }
 
-    public function getConnector()
-    {
-        if (empty($this->_connector)) {
-            $database = Registry::get('database');
-
-            if (!$database) {
-                throw new ConnectionException('Brak dostępnego konektora');
-            }
-
-            $this->_connector = $database->initialize();
-        }
-
-        return $this->_connector;
-    }
-
-    public static function first(array $where = [], array $fields = ['*'], $order = null, $direction = null)
+    public static function first($where = [], $fields = ['*'], $order = null, $direction = null)
     {
         $model = new static();
         return $model->_first($where, $fields, $order, $direction);
@@ -284,7 +290,7 @@ class Model extends Base
         return $model->_all($where, $fields, $order, $direction, $limit, $page);
     }
 
-    protected function _first(array $where = [], array $fields = ['*'], $order = null, $direction = null)
+    protected function _first($where = [], $fields = ['*'], $order = null, $direction = null)
     {
         $query = $this->_connector
             ->query()
@@ -328,7 +334,7 @@ class Model extends Base
             $query->limit($limit, $page);
         }
 
-        $rows = array();
+        $rows = [];
         $class = get_class($this);
 
         foreach ($query->all() as $row) {
@@ -339,7 +345,7 @@ class Model extends Base
 
         return $rows;
     }
-
+    
     protected function _count(array $where = [])
     {
         $query = $this->_connector
@@ -351,14 +357,5 @@ class Model extends Base
         }
 
         return $query->count();
-    }
-
-    /**
-     * @param string $name
-     * @return ImplementationException
-     */
-    protected function _getExceptionForImplementation(string $name): ImplementationException
-    {
-        return new ImplementationException('Metoda ' . $name . 'nie jest zaimplementowana.');
     }
 }

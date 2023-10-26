@@ -9,6 +9,7 @@ use Framework\Database\Query\Mysql as MysqlQuery;
 use Framework\Exceptions\ServiceException;
 use Framework\Exceptions\SqlException;
 use mysqli;
+use mysqli_driver;
 
 class Mysql extends Connector
 {
@@ -46,7 +47,6 @@ class Mysql extends Connector
      * @readwrite
      */
     protected bool $_isConnected = false;
-    protected string $lastError;
 
     /**
      * @throws ServiceException
@@ -54,12 +54,16 @@ class Mysql extends Connector
     public function connect(): Mysql
     {
         if (!$this->_isValidService()) {
-            $this->_service = new Mysqli(
+
+            $driver = new mysqli_driver();
+            $driver->report_mode = MYSQLI_REPORT_ALL;
+
+            $this->_service = new mysqli(
                 $this->_host,
                 $this->_username,
                 $this->_password,
                 $this->_schema,
-                $this->_port,
+                $this->_port
             );
 
             if ($this->_service->connect_error) {
@@ -91,21 +95,27 @@ class Mysql extends Connector
      */
     public function execute(string $sql)
     {
-        if ($this->_isValidService()) {
+        if (!$this->_isValidService()) {
             throw new ServiceException('Nie połączono z usługą.');
         }
-        return $this->_service->query($sql);
+
+        return $this->_service->query(trim($sql));
     }
 
     /**
      * @throws ServiceException
      */
-    public function escape(string $value): string
+    public function escape(mixed $value): mixed
     {
-        if ($this->_isValidService()) {
+        if (!$this->_isValidService()) {
             throw new ServiceException('Nie połączono z usługą.');
         }
-        return $this->_service->real_escape_string($value);
+
+        if (is_string($value)) {
+            return $this->_service->real_escape_string($value);
+        }
+
+        return $value;
     }
 
     /**
@@ -113,7 +123,7 @@ class Mysql extends Connector
      */
     public function getLastInsertId(): int|string
     {
-        if ($this->_isValidService()) {
+        if (!$this->_isValidService()) {
             throw new ServiceException('Nie połączono z usługą.');
         }
         return $this->_service->insert_id;
@@ -124,7 +134,7 @@ class Mysql extends Connector
      */
     public function getAffectedRows(): int|string
     {
-        if ($this->_isValidService()) {
+        if (!$this->_isValidService()) {
             throw new ServiceException('Nie połączono z usługą.');
         }
         return $this->_service->affected_rows;
@@ -135,7 +145,7 @@ class Mysql extends Connector
      */
     public function getLastError(): string
     {
-        if ($this->_isValidService()) {
+        if (!$this->_isValidService()) {
             throw new ServiceException('Nie połączono z usługą.');
         }
         return $this->_service->error;
@@ -167,39 +177,27 @@ class Mysql extends Connector
 
             switch ($type) {
                 case 'autonumber':
-                {
                     $lines[] = "`{$name}` int(11) NOT NULL AUTO_INCREMENT";
                     break;
-                }
                 case 'text':
-                {
                     if ($length !== null && $length <= 255) {
                         $lines[] = "`{$name}` varchar({$length}) DEFAULT NULL";
                     } else {
                         $lines[] = "`{$name}` text";
                     }
                     break;
-                }
                 case 'integer':
-                {
                     $lines[] = "`{$name}` int(11) DEFAULT NULL";
                     break;
-                }
                 case 'decimal':
-                {
                     $lines[] = "`{$name}` float DEFAULT NULL";
                     break;
-                }
                 case 'boolean':
-                {
                     $lines[] = "`{$name}` tinyint(4) DEFAULT NULL";
                     break;
-                }
                 case 'datetime':
-                {
                     $lines[] = "`{$name}` datetime DEFAULT NULL";
                     break;
-                }
             }
         }
 
@@ -215,13 +213,13 @@ class Mysql extends Connector
 
         $result = $this->execute("DROP TABLE IF EXISTS {$table};");
         if ($result === false) {
-            $error = $this->lastError;
+            $error = $this->getLastError();
             throw new  SqlException('Wystąpił błąd w zapytaniu: ' . $error);
         }
 
         $result = $this->execute($sql);
         if ($result === false) {
-            $error = $this->lastError;
+            $error = $this->getLastError();
             throw new  SqlException('Wystąpił błąd w zapytaniu: ' . $error);
         }
 
@@ -239,4 +237,5 @@ class Mysql extends Connector
 
         return false;
     }
+
 }

@@ -8,7 +8,7 @@ use Framework\Database;
 use Framework\Exceptions\ServiceException;
 use Framework\Test;
 
-$options = array(
+$options = [
     'type'    => 'mysql',
     'options' => [
         'host'     => 'localhost',
@@ -16,7 +16,7 @@ $options = array(
         'password' => 'courses',
         'schema'   => 'course_mvc_pitt'
     ]
-);
+];
 
 Test::add(
     function () {
@@ -86,11 +86,8 @@ Test::add(
         $database = new Database($options);
         $database = $database->initialize();
         $database = $database->connect();
-
-
+        
         $database->execute('JAKIŚ NIEPOPRAWNY KOD SQL');
-
-        var_dump($database->getLastError());
 
         return (bool)$database->getLastError();
     },

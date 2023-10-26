@@ -10,6 +10,7 @@ use Framework\Exceptions\ServiceException;
 use Framework\Exceptions\SqlException;
 use mysqli;
 use mysqli_driver;
+use mysqli_sql_exception;
 
 class Mysql extends Connector
 {
@@ -56,7 +57,7 @@ class Mysql extends Connector
         if (!$this->_isValidService()) {
 
             $driver = new mysqli_driver();
-            $driver->report_mode = MYSQLI_REPORT_ALL;
+            $driver->report_mode = MYSQLI_REPORT_ERROR;
 
             $this->_service = new mysqli(
                 $this->_host,

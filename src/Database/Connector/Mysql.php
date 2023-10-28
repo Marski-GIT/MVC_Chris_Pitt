@@ -206,8 +206,8 @@ class Mysql extends Connector
         $sql = sprintf(
             $template,
             $table,
-            join(',\n', $lines),
-            join(',\n', $indices),
+            join(',', $lines),
+            join(',', $indices),
             $this->_engine,
             $this->_charset
         );

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Framework;
 
+use Framework\Exceptions\ControllerException;
 use Framework\Exceptions\ImplementationException;
 use Framework\Exceptions\PrimaryException;
 use Framework\Exceptions\TypeException;
-use MongoDB\Driver\Exception\ConnectionException;
+
 use ReflectionException;
 
 class Model extends Base
@@ -15,11 +16,13 @@ class Model extends Base
     /**
      * @readwrite
      */
-    protected string $_table = '';
+    protected string $_table;
+
     /**
      * @readwrite
      */
     protected object $_connector;
+
     /**
      * @read
      */
@@ -33,8 +36,7 @@ class Model extends Base
     ];
 
     protected array $_columns;
-    protected string $_primary;
-    private array $primaryColumn;
+    protected array $_primary;
 
     public function _getExceptionForImplementation(string $name): ImplementationException
     {
@@ -61,9 +63,9 @@ class Model extends Base
         $name = $primary['name'];
 
         if (!empty($this->$raw)) {
-            $previous = $this->_connector
+            $previous = $this->connector
                 ->query()
-                ->from($this->_table)
+                ->from($this->table)
                 ->where("{$name} = ?", $this->$raw)
                 ->first();
 
@@ -88,21 +90,21 @@ class Model extends Base
         $name = $primary['name'];
 
         if (!empty($this->$raw)) {
-            return $this->_connector
+            return $this->connector
                 ->query()
-                ->from($this->_table)
+                ->from($this->table)
                 ->where("{$name} = ?", $this->$raw)
                 ->delete();
         }
     }
 
-    public static function deleteAll(array $where = [])
+    public static function deleteAll($where = [])
     {
         $instance = new static();
 
-        $query = $instance->_connector
+        $query = $instance->connector
             ->query()
-            ->from($instance->_table);
+            ->from($instance->table);
 
         foreach ($where as $clause => $value) {
             $query->where($clause, $value);
@@ -118,16 +120,16 @@ class Model extends Base
         $raw = $primary['raw'];
         $name = $primary['name'];
 
-        $query = $this->_connector
+        $query = $this->connector
             ->query()
-            ->from($this->_table);
+            ->from($this->table);
 
         if (!empty($this->$raw)) {
             $query->where("{$name} = ?", $this->$raw);
         }
 
         $data = [];
-        foreach ($this->_columns as $key => $column) {
+        foreach ($this->columns as $key => $column) {
             if (!$column['read']) {
                 $prop = $column['raw'];
                 $data[$key] = $this->$prop;
@@ -159,13 +161,16 @@ class Model extends Base
         return $this->_table;
     }
 
+    /**
+     * @throws ControllerException
+     */
     public function getConnector()
     {
         if (empty($this->_connector)) {
             $database = Registry::get('database');
 
             if (!$database) {
-                throw new ConnectionException('Brak dostępnego konektora');
+                throw new ControllerException('Brak dostępnego konektora');
             }
 
             $this->_connector = $database->initialize();
@@ -179,18 +184,18 @@ class Model extends Base
      * @throws PrimaryException
      * @throws TypeException
      */
-    public function getColumns()
+    public function getColumns(): array
     {
         if (empty($_columns)) {
             $primaries = 0;
             $columns = [];
             $class = get_class($this);
-            $types = $this->_types;
+            $types = $this->types;
 
             $inspector = new Inspector($this);
             $properties = $inspector->getClassProperties();
 
-            $first = function ($array, string $key) {
+            $first = function ($array, $key) {
                 if (!empty($array[$key]) && sizeof($array[$key]) == 1) {
                     return $array[$key][0];
                 }
@@ -259,7 +264,7 @@ class Model extends Base
         if (!isset($this->_primary)) {
             $primary = null;
 
-            foreach ($this->_columns as $column) {
+            foreach ($this->columns as $column) {
                 if ($column['primary']) {
                     $primary = $column;
                     break;
@@ -272,17 +277,18 @@ class Model extends Base
         return $this->_primary;
     }
 
-    public static function first($where = [], $fields = ['*'], $order = null, $direction = null)
-    {
-        $model = new static();
-        return $model->_first($where, $fields, $order, $direction);
-    }
-
     public static function count(array $where = [])
     {
         $model = new static();
         return $model->_count($where);
     }
+
+    public static function first(array $where = [], $fields = ['*'], $order = null, $direction = null)
+    {
+        $model = new static();
+        return $model->_first($where, $fields, $order, $direction);
+    }
+
 
     public static function all(array $where = [], array $fields = ['*'], $order = null, $direction = null, $limit = null, $page = null): array
     {
@@ -290,11 +296,11 @@ class Model extends Base
         return $model->_all($where, $fields, $order, $direction, $limit, $page);
     }
 
-    protected function _first($where = [], $fields = ['*'], $order = null, $direction = null)
+    protected function _first(array $where = [], $fields = ['*'], $order = null, $direction = null)
     {
-        $query = $this->_connector
+        $query = $this->connector
             ->query()
-            ->from($this->_table, $fields);
+            ->from($this->table, $fields);
 
         foreach ($where as $clause => $value) {
             $query->where($clause, $value);
@@ -318,9 +324,9 @@ class Model extends Base
 
     protected function _all(array $where = [], array $fields = ['*'], $order = null, $direction = null, $limit = null, $page = null): array
     {
-        $query = $this->_connector
+        $query = $this->connector
             ->query()
-            ->from($this->_table, $fields);
+            ->from($this->table, $fields);
 
         foreach ($where as $clause => $value) {
             $query->where($clause, $value);
@@ -345,12 +351,12 @@ class Model extends Base
 
         return $rows;
     }
-    
+
     protected function _count(array $where = [])
     {
-        $query = $this->_connector
+        $query = $this->connector
             ->query()
-            ->from($this->_table);
+            ->from($this->table);
 
         foreach ($where as $clause => $value) {
             $query->where($clause, $value);

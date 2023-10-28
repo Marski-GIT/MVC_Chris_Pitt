@@ -12,8 +12,7 @@ final class Autoloader
         $flags = PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE;
         $file = str_replace(['\\', 'Framework/'], [DIRECTORY_SEPARATOR, ''], trim($class, '\\')) . '.php';
 
-        $combined = __DIR__ . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . $file;
-
+        $combined = __DIR__ . DIRECTORY_SEPARATOR . 'framework' . DIRECTORY_SEPARATOR . $file;
         if (file_exists($combined)) {
             require_once $combined;
         } else {

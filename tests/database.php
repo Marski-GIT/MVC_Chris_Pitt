@@ -86,7 +86,7 @@ Test::add(
         $database = new Database($options);
         $database = $database->initialize();
         $database = $database->connect();
-        
+
         $database->execute('JAKIŚ NIEPOPRAWNY KOD SQL');
 
         return (bool)$database->getLastError();

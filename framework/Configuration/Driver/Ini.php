@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Framework\Configuration\Driver;
+namespace Configuration\Driver;
 
 use Framework\ArrayMethods;
 use Framework\Exceptions\ArgumentException;
